@@ -1,5 +1,7 @@
 package dev.cristian.app.entity;
 
+import dev.cristian.app.enums.EstatusAreaComun;
+import dev.cristian.app.enums.TipoDeArea;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,5 +29,5 @@ public class AreaComun {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private Estatus estatus;
+    private EstatusAreaComun estatusAreaComun;
 }

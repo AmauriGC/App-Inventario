@@ -1,5 +1,6 @@
 package dev.cristian.app.entity;
 
+import dev.cristian.app.enums.EstatusAsignacion;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -30,7 +31,7 @@ public class Asignaciones {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private Estatus estatus;
+    private EstatusAsignacion estatusAsignacion;
 
     @Column
     private LocalDateTime fechaDeAsignacion;

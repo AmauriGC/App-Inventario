@@ -1,5 +1,7 @@
 package dev.cristian.app.entity;
 
+import dev.cristian.app.enums.EstatusMarcaModeloTipoDeBien;
+import dev.cristian.app.enums.TipoBien;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,9 +22,9 @@ public class TipoDeBien {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private Tipo tipo;
+    private TipoBien tipoBien;
 
     @Column
     @Enumerated(EnumType.STRING)
-    private Estatus estatus;
+    private EstatusMarcaModeloTipoDeBien estatusMarcaModeloTipoDeBien;
 }

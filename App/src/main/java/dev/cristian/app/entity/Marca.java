@@ -1,5 +1,6 @@
 package dev.cristian.app.entity;
 
+import dev.cristian.app.enums.EstatusMarcaModeloTipoDeBien;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,5 +24,5 @@ public class Marca {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private Estatus estatus;
+    private EstatusMarcaModeloTipoDeBien estatusMarcaModeloTipoDeBien;
 }
