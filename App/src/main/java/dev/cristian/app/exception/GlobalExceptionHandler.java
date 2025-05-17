@@ -12,13 +12,13 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.*;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Método reutilizable para respuestas simples
     private ResponseEntity<Map<String, Object>> crearRespuesta(String mensaje, HttpStatus status) {
         Map<String, Object> response = new HashMap<>();
         response.put("message", mensaje);
@@ -26,7 +26,6 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, status);
     }
 
-    // Método reutilizable para respuestas con errores múltiples
     private ResponseEntity<Map<String, Object>> crearRespuesta(String mensaje, List<String> errores, HttpStatus status) {
         Map<String, Object> response = new HashMap<>();
         response.put("message", mensaje);
@@ -82,5 +81,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ResponseEntity<Map<String, Object>> handleRecursoNoEncontrado(RecursoNoEncontradoException ex) {
         return crearRespuesta(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<String> handleEnumConversionError(MethodArgumentTypeMismatchException ex) {
+        return ResponseEntity.badRequest().body("Valor no válido para el parámetro: " + ex.getName());
     }
 }
