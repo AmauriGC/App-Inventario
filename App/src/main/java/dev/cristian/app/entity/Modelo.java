@@ -1,0 +1,27 @@
+package dev.cristian.app.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Table(name = "modelo")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class Modelo {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column
+    private String nombreDelModelo;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private Estatus estatus;
+}
