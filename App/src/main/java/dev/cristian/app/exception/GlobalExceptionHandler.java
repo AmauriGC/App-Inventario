@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -81,13 +82,24 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleEnumConversionError(MethodArgumentTypeMismatchException ex) {
-        String mensaje = "Valor no válido para el parámetro: " + ex.getName();
-        return crearRespuesta(mensaje, HttpStatus.BAD_REQUEST);
-    }
+        String mensaje;
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleGeneral(Exception ex) {
-        ex.printStackTrace();
-        return crearRespuesta("Error interno del servidor", HttpStatus.INTERNAL_SERVER_ERROR);
+        Class<?> targetType = ex.getRequiredType();
+        if (targetType != null && targetType.isEnum()) {
+            Object[] valores = targetType.getEnumConstants();
+            List<String> valoresValidos = Arrays.stream(valores)
+                    .map(Object::toString)
+                    .collect(Collectors.toList());
+
+            mensaje = String.format(
+                    "Valor inválido para el campo '%s'. Valores permitidos: %s",
+                    ex.getName(),
+                    String.join(", ", valoresValidos)
+            );
+        } else {
+            mensaje = "Valor no válido para el parámetro: " + ex.getName();
+        }
+
+        return crearRespuesta(mensaje, HttpStatus.BAD_REQUEST);
     }
 }
