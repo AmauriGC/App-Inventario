@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface areaComunRepository extends JpaRepository<AreaComun, Long> {
+public interface AreaComunRepository extends JpaRepository<AreaComun, Long> {
 
     List<AreaComun> findByTipoDeAreaAndEstatusAreaComun(TipoDeArea tipoDeArea, EstatusAreaComun estatus);
 

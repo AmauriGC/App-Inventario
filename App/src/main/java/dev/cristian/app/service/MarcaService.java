@@ -8,7 +8,7 @@ import dev.cristian.app.enums.EstatusMarcaModeloTipoDeBien;
 import dev.cristian.app.exception.exceptions.RecursoDuplicadoException;
 import dev.cristian.app.exception.exceptions.RecursoNoEncontradoException;
 import dev.cristian.app.mapper.MarcaMapper;
-import dev.cristian.app.repository.marcaRepository;
+import dev.cristian.app.repository.MarcaRepository;
 import dev.cristian.app.service.interfaces.MarcaInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,10 +25,10 @@ public class MarcaService implements MarcaInterface {
 
     private static final Logger logger = LoggerFactory.getLogger(MarcaService.class);
 
-    private final marcaRepository marcaRepository;
+    private final MarcaRepository marcaRepository;
     private final MarcaMapper marcaMapper;
 
-    public MarcaService(marcaRepository marcaRepository, MarcaMapper marcaMapper) {
+    public MarcaService(MarcaRepository marcaRepository, MarcaMapper marcaMapper) {
         this.marcaRepository = marcaRepository;
         this.marcaMapper = marcaMapper;
     }

@@ -24,20 +24,20 @@ public class BienService implements BienInterface {
 
     private static final Logger logger = LoggerFactory.getLogger(BienService.class);
 
-    private final bienRepository bienRepository;
-    private final areaComunRepository areaComunRepository;
-    private final marcaRepository marcaRepository;
-    private final modeloRepository modeloRepository;
-    private final tipoDeBienRepository tipoDeBienRepository;
-    private final usuarioRepository usuarioRepository;
+    private final BienRepository bienRepository;
+    private final AreaComunRepository areaComunRepository;
+    private final MarcaRepository marcaRepository;
+    private final ModeloRepository modeloRepository;
+    private final TipoDeBienRepository tipoDeBienRepository;
+    private final UsuarioRepository usuarioRepository;
     private final BienMapper bienMapper;
 
-    public BienService(bienRepository bienRepository,
-                       areaComunRepository areaComunRepository,
-                       marcaRepository marcaRepository,
-                       modeloRepository modeloRepository,
-                       tipoDeBienRepository tipoDeBienRepository,
-                       usuarioRepository usuarioRepository,
+    public BienService(BienRepository bienRepository,
+                       AreaComunRepository areaComunRepository,
+                       MarcaRepository marcaRepository,
+                       ModeloRepository modeloRepository,
+                       TipoDeBienRepository tipoDeBienRepository,
+                       UsuarioRepository usuarioRepository,
                        BienMapper bienMapper) {
         this.bienRepository = bienRepository;
         this.areaComunRepository = areaComunRepository;

@@ -8,7 +8,7 @@ import dev.cristian.app.enums.EstatusMarcaModeloTipoDeBien;
 import dev.cristian.app.exception.exceptions.RecursoDuplicadoException;
 import dev.cristian.app.exception.exceptions.RecursoNoEncontradoException;
 import dev.cristian.app.mapper.ModeloMapper;
-import dev.cristian.app.repository.modeloRepository;
+import dev.cristian.app.repository.ModeloRepository;
 import dev.cristian.app.service.interfaces.ModeloInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,10 +25,10 @@ public class ModeloService implements ModeloInterface {
 
     private static final Logger logger = LoggerFactory.getLogger(ModeloService.class);
 
-    private final modeloRepository modeloRepository;
+    private final ModeloRepository modeloRepository;
     private final ModeloMapper modeloMapper;
 
-    public ModeloService(modeloRepository modeloRepository, ModeloMapper modeloMapper) {
+    public ModeloService(ModeloRepository modeloRepository, ModeloMapper modeloMapper) {
         this.modeloRepository = modeloRepository;
         this.modeloMapper = modeloMapper;
     }

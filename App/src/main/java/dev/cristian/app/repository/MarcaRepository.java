@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface marcaRepository extends JpaRepository<Marca, Long> {
+public interface MarcaRepository extends JpaRepository<Marca, Long> {
 
     List<Marca> findByNombreDeMarcaContainingIgnoreCase(String nombreDeMarca);
 

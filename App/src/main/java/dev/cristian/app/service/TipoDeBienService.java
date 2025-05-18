@@ -9,7 +9,7 @@ import dev.cristian.app.enums.TipoBien;
 import dev.cristian.app.exception.exceptions.RecursoDuplicadoException;
 import dev.cristian.app.exception.exceptions.RecursoNoEncontradoException;
 import dev.cristian.app.mapper.TipoDeBienMapper;
-import dev.cristian.app.repository.tipoDeBienRepository;
+import dev.cristian.app.repository.TipoDeBienRepository;
 import dev.cristian.app.service.interfaces.TipoDeBienInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,10 +26,10 @@ public class TipoDeBienService implements TipoDeBienInterface {
 
     private static final Logger logger = LoggerFactory.getLogger(TipoDeBienService.class);
 
-    private final tipoDeBienRepository tipoDeBienRepository;
+    private final TipoDeBienRepository tipoDeBienRepository;
     private final TipoDeBienMapper tipoDeBienMapper;
 
-    public TipoDeBienService(tipoDeBienRepository tipoDeBienRepository,
+    public TipoDeBienService(TipoDeBienRepository tipoDeBienRepository,
                              TipoDeBienMapper tipoDeBienMapper) {
         this.tipoDeBienRepository = tipoDeBienRepository;
         this.tipoDeBienMapper = tipoDeBienMapper;

@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface tipoDeBienRepository extends JpaRepository<TipoDeBien, Long> {
+public interface TipoDeBienRepository extends JpaRepository<TipoDeBien, Long> {
 
     List<TipoDeBien> findByTipoBien(TipoBien tipoBien);
 

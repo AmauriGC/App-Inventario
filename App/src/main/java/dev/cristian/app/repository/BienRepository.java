@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface bienRepository extends JpaRepository<Bien, Long> {
+public interface BienRepository extends JpaRepository<Bien, Long> {
 
     List<Bien> findByUsuarioIdAndEstatusBien(Long usuarioId, EstatusBien estatus);
 

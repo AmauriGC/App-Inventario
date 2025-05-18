@@ -9,7 +9,7 @@ import dev.cristian.app.enums.TipoDeArea;
 import dev.cristian.app.exception.exceptions.RecursoDuplicadoException;
 import dev.cristian.app.exception.exceptions.RecursoNoEncontradoException;
 import dev.cristian.app.mapper.AreaComunMapper;
-import dev.cristian.app.repository.areaComunRepository;
+import dev.cristian.app.repository.AreaComunRepository;
 import dev.cristian.app.service.interfaces.AreaComunInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,10 +26,10 @@ public class AreaComunService implements AreaComunInterface {
 
     private static final Logger logger = LoggerFactory.getLogger(AreaComunService.class);
 
-    private final areaComunRepository areaComunRepository;
+    private final AreaComunRepository areaComunRepository;
     private final AreaComunMapper areaComunMapper;
 
-    public AreaComunService(areaComunRepository areaComunRepository, AreaComunMapper areaComunMapper) {
+    public AreaComunService(AreaComunRepository areaComunRepository, AreaComunMapper areaComunMapper) {
         this.areaComunRepository = areaComunRepository;
         this.areaComunMapper = areaComunMapper;
     }

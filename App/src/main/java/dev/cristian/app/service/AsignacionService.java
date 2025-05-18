@@ -9,9 +9,9 @@ import dev.cristian.app.entity.Usuario;
 import dev.cristian.app.enums.EstatusAsignacion;
 import dev.cristian.app.exception.exceptions.RecursoNoEncontradoException;
 import dev.cristian.app.mapper.AsignacionesMapper;
-import dev.cristian.app.repository.asignacionesRepository;
-import dev.cristian.app.repository.bienRepository;
-import dev.cristian.app.repository.usuarioRepository;
+import dev.cristian.app.repository.AsignacionesRepository;
+import dev.cristian.app.repository.BienRepository;
+import dev.cristian.app.repository.UsuarioRepository;
 import dev.cristian.app.service.interfaces.AsignacionesInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,14 +29,14 @@ public class AsignacionService implements AsignacionesInterface {
 
     private static final Logger logger = LoggerFactory.getLogger(AsignacionService.class);
 
-    private final asignacionesRepository asignacionesRepository;
-    private final usuarioRepository usuarioRepository;
-    private final bienRepository bienRepository;
+    private final AsignacionesRepository asignacionesRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final BienRepository bienRepository;
     private final AsignacionesMapper asignacionesMapper;
 
-    public AsignacionService(asignacionesRepository asignacionesRepository,
-                             usuarioRepository usuarioRepository,
-                             bienRepository bienRepository,
+    public AsignacionService(AsignacionesRepository asignacionesRepository,
+                             UsuarioRepository usuarioRepository,
+                             BienRepository bienRepository,
                              AsignacionesMapper asignacionesMapper) {
         this.asignacionesRepository = asignacionesRepository;
         this.usuarioRepository = usuarioRepository;

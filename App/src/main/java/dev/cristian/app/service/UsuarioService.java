@@ -7,7 +7,7 @@ import dev.cristian.app.enums.Rol;
 import dev.cristian.app.exception.exceptions.RecursoDuplicadoException;
 import dev.cristian.app.exception.exceptions.RecursoNoEncontradoException;
 import dev.cristian.app.mapper.UsuarioMapper;
-import dev.cristian.app.repository.usuarioRepository;
+import dev.cristian.app.repository.UsuarioRepository;
 import dev.cristian.app.service.interfaces.UsuarioInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +24,10 @@ public class UsuarioService implements UsuarioInterface {
 
     private static final Logger logger = LoggerFactory.getLogger(UsuarioService.class);
 
-    private final usuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
     private final UsuarioMapper usuarioMapper;
 
-    public UsuarioService(usuarioRepository usuarioRepository, UsuarioMapper usuarioMapper) {
+    public UsuarioService(UsuarioRepository usuarioRepository, UsuarioMapper usuarioMapper) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioMapper = usuarioMapper;
     }
