@@ -5,6 +5,7 @@ import dev.cristian.app.dto.areacomun.AreaComunCrearDto;
 import dev.cristian.app.dto.areacomun.AreaComunDetalleDto;
 import dev.cristian.app.enums.EstatusAreaComun;
 import dev.cristian.app.enums.TipoDeArea;
+import dev.cristian.app.response.ApiResponse;
 import dev.cristian.app.service.AreaComunService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -24,47 +25,47 @@ public class AreaComunController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AreaComunDetalleDto>> listarTodas() {
+    public ResponseEntity<ApiResponse<List<AreaComunDetalleDto>>> listarTodas() {
         return areaComunService.listarTodas();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AreaComunDetalleDto> obtenerPorId(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<AreaComunDetalleDto>> obtenerPorId(@PathVariable Long id) {
         return areaComunService.obtenerPorId(id);
     }
 
     @PostMapping
-    public ResponseEntity<AreaComunDetalleDto> crear(@Valid @RequestBody AreaComunCrearDto dto) {
+    public ResponseEntity<ApiResponse<AreaComunDetalleDto>> crear(@Valid @RequestBody AreaComunCrearDto dto) {
         return areaComunService.crear(dto);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AreaComunDetalleDto> actualizar(
+    public ResponseEntity<ApiResponse<AreaComunDetalleDto>> actualizar(
             @PathVariable Long id,
             @Valid @RequestBody AreaComunActualizarDto dto) {
         return areaComunService.actualizar(id, dto);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<AreaComunDetalleDto> eliminar(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<AreaComunDetalleDto>> eliminar(@PathVariable Long id) {
         return areaComunService.eliminar(id);
     }
 
     @GetMapping("/tipo-estado")
-    public ResponseEntity<List<AreaComunDetalleDto>> buscarPorTipoYEstado(
+    public ResponseEntity<ApiResponse<List<AreaComunDetalleDto>>> buscarPorTipoYEstado(
             @RequestParam TipoDeArea tipo,
             @RequestParam EstatusAreaComun estatus) {
         return areaComunService.buscarPorTipoYEstado(tipo, estatus);
     }
 
     @GetMapping("/buscar")
-    public ResponseEntity<List<AreaComunDetalleDto>> buscarPorNombre(
+    public ResponseEntity<ApiResponse<List<AreaComunDetalleDto>>> buscarPorNombre(
             @RequestParam String nombre) {
         return areaComunService.buscarPorNombre(nombre);
     }
 
     @GetMapping("/estado")
-    public ResponseEntity<List<AreaComunDetalleDto>> filtrarPorEstado(
+    public ResponseEntity<ApiResponse<List<AreaComunDetalleDto>>> filtrarPorEstado(
             @RequestParam EstatusAreaComun estatus) {
         return areaComunService.buscarPorEstado(estatus);
     }

@@ -17,4 +17,8 @@ public interface BienRepository extends JpaRepository<Bien, Long> {
     List<Bien> findByTipoDeBienIdAndEstatusBien(Long tipoDeBienId, EstatusBien estatus);
 
     List<Bien> findByMarcaIdAndModeloIdAndTipoDeBienId(Long marcaId, Long modeloId, Long tipoDeBienId);
+
+    List<Bien> findByEstatusBien(EstatusBien estatus);
+
+    List<Bien> findByMarcaId(Long marcaId);
 }

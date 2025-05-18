@@ -8,10 +8,10 @@ import dev.cristian.app.exception.exceptions.RecursoDuplicadoException;
 import dev.cristian.app.exception.exceptions.RecursoNoEncontradoException;
 import dev.cristian.app.mapper.UsuarioMapper;
 import dev.cristian.app.repository.UsuarioRepository;
+import dev.cristian.app.response.ApiResponse;
 import dev.cristian.app.service.interfaces.UsuarioInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,25 +34,30 @@ public class UsuarioService implements UsuarioInterface {
 
     @Override
     @Transactional
-    public ResponseEntity<UsuarioDetalleDto> crear(UsuarioCrearDto dto) {
+    public ResponseEntity<ApiResponse<UsuarioDetalleDto>> crear(UsuarioCrearDto dto) {
         logger.info("Intentando crear nuevo usuario: {}", dto.getCorreo());
 
-        if (usuarioRepository.findByCorreoContainingIgnoreCase(dto.getCorreo()).stream()
-                .anyMatch(u -> u.getCorreo().equalsIgnoreCase(dto.getCorreo()))) {
-            logger.warn("Intento de crear usuario con correo duplicado: {}", dto.getCorreo());
-            throw new RecursoDuplicadoException("Ya existe un usuario con el correo: " + dto.getCorreo());
-        }
+        // Verificar si ya existe un usuario con el mismo correo
+        usuarioRepository.findByCorreoContainingIgnoreCase(dto.getCorreo())
+                .stream()
+                .filter(u -> u.getCorreo().equalsIgnoreCase(dto.getCorreo()))
+                .findFirst()
+                .ifPresent(u -> {
+                    logger.warn("Intento de crear usuario con correo duplicado: {}", dto.getCorreo());
+                    throw new RecursoDuplicadoException("Ya existe un usuario con el correo: " + dto.getCorreo());
+                });
 
         Usuario usuario = usuarioMapper.toEntity(dto);
         Usuario usuarioGuardado = usuarioRepository.save(usuario);
         logger.info("Usuario creado exitosamente con ID: {}", usuarioGuardado.getId());
 
-        return new ResponseEntity<>(usuarioMapper.toDetalleDto(usuarioGuardado), HttpStatus.CREATED);
+        return ResponseEntity.status(201)
+                .body(ApiResponse.ok("Usuario creado exitosamente", usuarioMapper.toDetalleDto(usuarioGuardado)));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<UsuarioDetalleDto> obtenerPorId(Long id) {
+    public ResponseEntity<ApiResponse<UsuarioDetalleDto>> obtenerPorId(Long id) {
         logger.info("Buscando usuario con ID: {}", id);
 
         Usuario usuario = usuarioRepository.findById(id)
@@ -61,24 +66,24 @@ public class UsuarioService implements UsuarioInterface {
                     return new RecursoNoEncontradoException("Usuario con ID " + id + " no encontrado");
                 });
 
-        return ResponseEntity.ok(usuarioMapper.toDetalleDto(usuario));
+        return ResponseEntity.ok(ApiResponse.ok("Usuario encontrado", usuarioMapper.toDetalleDto(usuario)));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<UsuarioDetalleDto>> listarTodos() {
+    public ResponseEntity<ApiResponse<List<UsuarioDetalleDto>>> listarTodos() {
         logger.info("Listando todos los usuarios");
 
         List<UsuarioDetalleDto> usuarios = usuarioRepository.findAll().stream()
                 .map(usuarioMapper::toDetalleDto)
                 .collect(Collectors.toList());
 
-        return ResponseEntity.ok(usuarios);
+        return ResponseEntity.ok(ApiResponse.ok("Listado de usuarios exitoso", usuarios));
     }
 
     @Override
     @Transactional
-    public ResponseEntity<UsuarioDetalleDto> actualizar(Long id, UsuarioActualizarDto dto) {
+    public ResponseEntity<ApiResponse<UsuarioDetalleDto>> actualizar(Long id, UsuarioActualizarDto dto) {
         logger.info("Actualizando usuario con ID: {}", id);
 
         Usuario usuario = usuarioRepository.findById(id)
@@ -87,24 +92,28 @@ public class UsuarioService implements UsuarioInterface {
                     return new RecursoNoEncontradoException("Usuario con ID " + id + " no encontrado");
                 });
 
-        if (dto.getCorreo() != null &&
-                !dto.getCorreo().equalsIgnoreCase(usuario.getCorreo()) &&
-                usuarioRepository.findByCorreoContainingIgnoreCase(dto.getCorreo()).stream()
-                        .anyMatch(u -> u.getCorreo().equalsIgnoreCase(dto.getCorreo()))) {
-            logger.warn("Intento de actualizar usuario con correo duplicado: {}", dto.getCorreo());
-            throw new RecursoDuplicadoException("Ya existe un usuario con el correo: " + dto.getCorreo());
+        // Validar si el nuevo correo ya existe (si se está cambiando)
+        if (dto.getCorreo() != null && !dto.getCorreo().equalsIgnoreCase(usuario.getCorreo())) {
+            usuarioRepository.findByCorreoContainingIgnoreCase(dto.getCorreo())
+                    .stream()
+                    .filter(u -> u.getCorreo().equalsIgnoreCase(dto.getCorreo()))
+                    .findFirst()
+                    .ifPresent(u -> {
+                        logger.warn("Intento de actualizar usuario con correo duplicado: {}", dto.getCorreo());
+                        throw new RecursoDuplicadoException("Ya existe un usuario con el correo: " + dto.getCorreo());
+                    });
         }
 
         usuarioMapper.actualizarDesdeDto(usuario, dto);
         Usuario usuarioActualizado = usuarioRepository.save(usuario);
         logger.info("Usuario con ID {} actualizado exitosamente", id);
 
-        return ResponseEntity.ok(usuarioMapper.toDetalleDto(usuarioActualizado));
+        return ResponseEntity.ok(ApiResponse.ok("Usuario actualizado exitosamente", usuarioMapper.toDetalleDto(usuarioActualizado)));
     }
 
     @Override
     @Transactional
-    public ResponseEntity<UsuarioDetalleDto> actualizarRolYEstatus(Long id, UsuarioActualizarRolEstatusDto dto) {
+    public ResponseEntity<ApiResponse<UsuarioDetalleDto>> actualizarRolYEstatus(Long id, UsuarioActualizarRolEstatusDto dto) {
         logger.info("Actualizando rol y estatus de usuario con ID: {}", id);
 
         Usuario usuario = usuarioRepository.findById(id)
@@ -117,16 +126,17 @@ public class UsuarioService implements UsuarioInterface {
         Usuario usuarioActualizado = usuarioRepository.save(usuario);
         logger.info("Rol y estatus de usuario con ID {} actualizados exitosamente", id);
 
-        return ResponseEntity.ok(usuarioMapper.toDetalleDto(usuarioActualizado));
+        return ResponseEntity.ok(ApiResponse.ok("Rol y estatus actualizados exitosamente", usuarioMapper.toDetalleDto(usuarioActualizado)));
     }
 
     @Override
-    public ResponseEntity<UsuarioDetalleDto> actualizarContrasena(Long id, UsuarioActualizarContrasenaDto dto) {
+    @Transactional
+    public ResponseEntity<ApiResponse<UsuarioDetalleDto>> actualizarContrasena(Long id, UsuarioActualizarContrasenaDto dto) {
         logger.info("Actualizando contraseña de usuario con ID: {}", id);
 
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> {
-                    logger.error("Usuario con ID {} no encontrado para la actualización de la contraseña", id);
+                    logger.error("Usuario con ID {} no encontrado para actualización de contraseña", id);
                     return new RecursoNoEncontradoException("Usuario con ID " + id + " no encontrado");
                 });
 
@@ -134,12 +144,12 @@ public class UsuarioService implements UsuarioInterface {
         Usuario usuarioActualizado = usuarioRepository.save(usuario);
         logger.info("Contraseña de usuario con ID {} actualizada exitosamente", id);
 
-        return ResponseEntity.ok(usuarioMapper.toDetalleDto(usuarioActualizado));
+        return ResponseEntity.ok(ApiResponse.ok("Contraseña actualizada exitosamente", usuarioMapper.toDetalleDto(usuarioActualizado)));
     }
 
     @Override
     @Transactional
-    public ResponseEntity<UsuarioDetalleDto> eliminar(Long id) {
+    public ResponseEntity<ApiResponse<UsuarioDetalleDto>> eliminar(Long id) {
         logger.info("Eliminando usuario con ID: {}", id);
 
         Usuario usuario = usuarioRepository.findById(id)
@@ -151,12 +161,12 @@ public class UsuarioService implements UsuarioInterface {
         usuarioRepository.delete(usuario);
         logger.info("Usuario con ID {} eliminado exitosamente", id);
 
-        return ResponseEntity.ok(usuarioMapper.toDetalleDto(usuario));
+        return ResponseEntity.ok(ApiResponse.ok("Usuario eliminado exitosamente", usuarioMapper.toDetalleDto(usuario)));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<UsuarioDetalleDto>> filtrarPorRol(Rol rol) {
+    public ResponseEntity<ApiResponse<List<UsuarioDetalleDto>>> filtrarPorRol(Rol rol) {
         logger.info("Filtrando usuarios por rol: {}", rol);
 
         List<UsuarioDetalleDto> usuarios = usuarioRepository.findByRol(rol).stream()
@@ -168,12 +178,12 @@ public class UsuarioService implements UsuarioInterface {
             throw new RecursoNoEncontradoException("No se encontraron usuarios con rol: " + rol);
         }
 
-        return ResponseEntity.ok(usuarios);
+        return ResponseEntity.ok(ApiResponse.ok("Usuarios encontrados", usuarios));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<UsuarioDetalleDto>> filtrarPorEstatus(EstatusUsuario estatus) {
+    public ResponseEntity<ApiResponse<List<UsuarioDetalleDto>>> filtrarPorEstatus(EstatusUsuario estatus) {
         logger.info("Filtrando usuarios por estatus: {}", estatus);
 
         List<UsuarioDetalleDto> usuarios = usuarioRepository.findByEstatusUsuario(estatus).stream()
@@ -185,12 +195,12 @@ public class UsuarioService implements UsuarioInterface {
             throw new RecursoNoEncontradoException("No se encontraron usuarios con estatus: " + estatus);
         }
 
-        return ResponseEntity.ok(usuarios);
+        return ResponseEntity.ok(ApiResponse.ok("Usuarios encontrados", usuarios));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<UsuarioDetalleDto>> buscarPorNombreOApellidos(String nombre, String apellidos) {
+    public ResponseEntity<ApiResponse<List<UsuarioDetalleDto>>> buscarPorNombreOApellidos(String nombre, String apellidos) {
         logger.info("Buscando usuarios por nombre '{}' o apellidos '{}'", nombre, apellidos);
 
         List<UsuarioDetalleDto> usuarios = usuarioRepository
@@ -204,12 +214,12 @@ public class UsuarioService implements UsuarioInterface {
                     String.format("No se encontraron usuarios con nombre '%s' o apellidos '%s'", nombre, apellidos));
         }
 
-        return ResponseEntity.ok(usuarios);
+        return ResponseEntity.ok(ApiResponse.ok("Usuarios encontrados", usuarios));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<UsuarioDetalleDto>> buscarPorNombreRolYEstatus(String nombre, Rol rol, EstatusUsuario estatus) {
+    public ResponseEntity<ApiResponse<List<UsuarioDetalleDto>>> buscarPorNombreRolYEstatus(String nombre, Rol rol, EstatusUsuario estatus) {
         logger.info("Buscando usuarios por nombre '{}', rol {} y estatus {}", nombre, rol, estatus);
 
         List<UsuarioDetalleDto> usuarios = usuarioRepository
@@ -224,12 +234,12 @@ public class UsuarioService implements UsuarioInterface {
                             nombre, rol, estatus));
         }
 
-        return ResponseEntity.ok(usuarios);
+        return ResponseEntity.ok(ApiResponse.ok("Usuarios encontrados", usuarios));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<UsuarioDetalleDto>> filtrarPorRolYEstatus(Rol rol, EstatusUsuario estatus) {
+    public ResponseEntity<ApiResponse<List<UsuarioDetalleDto>>> filtrarPorRolYEstatus(Rol rol, EstatusUsuario estatus) {
         logger.info("Buscando usuarios por rol {} y estatus {}", rol, estatus);
 
         List<UsuarioDetalleDto> usuarios = usuarioRepository
@@ -240,10 +250,9 @@ public class UsuarioService implements UsuarioInterface {
         if (usuarios.isEmpty()) {
             logger.warn("No se encontraron usuarios con rol {} y estatus {}", rol, estatus);
             throw new RecursoNoEncontradoException(
-                    String.format("No se encontraron usuarios con rol '%s' y estatus %s", rol, estatus)
-            );
+                    String.format("No se encontraron usuarios con rol %s y estatus %s", rol, estatus));
         }
 
-        return ResponseEntity.ok(usuarios);
+        return ResponseEntity.ok(ApiResponse.ok("Usuarios encontrados", usuarios));
     }
 }

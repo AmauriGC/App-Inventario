@@ -9,10 +9,10 @@ import dev.cristian.app.exception.exceptions.RecursoDuplicadoException;
 import dev.cristian.app.exception.exceptions.RecursoNoEncontradoException;
 import dev.cristian.app.mapper.ModeloMapper;
 import dev.cristian.app.repository.ModeloRepository;
+import dev.cristian.app.response.ApiResponse;
 import dev.cristian.app.service.interfaces.ModeloInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,28 +35,30 @@ public class ModeloService implements ModeloInterface {
 
     @Override
     @Transactional
-    public ResponseEntity<ModeloDetalleDto> crear(ModeloCrearDto dto) {
+    public ResponseEntity<ApiResponse<ModeloDetalleDto>> crear(ModeloCrearDto dto) {
         logger.info("Intentando crear nuevo modelo: {}", dto.getNombreDelModelo());
 
-        boolean existeModelo = modeloRepository.findByNombreDelModeloContainingIgnoreCase(dto.getNombreDelModelo())
+        // Verificar si ya existe un modelo con el mismo nombre (case insensitive)
+        modeloRepository.findByNombreDelModeloContainingIgnoreCase(dto.getNombreDelModelo())
                 .stream()
-                .anyMatch(m -> m.getNombreDelModelo().equalsIgnoreCase(dto.getNombreDelModelo()));
-
-        if (existeModelo) {
-            logger.warn("Intento de crear modelo duplicado: {}", dto.getNombreDelModelo());
-            throw new RecursoDuplicadoException("Ya existe un modelo con el nombre: " + dto.getNombreDelModelo());
-        }
+                .filter(m -> m.getNombreDelModelo().equalsIgnoreCase(dto.getNombreDelModelo()))
+                .findFirst()
+                .ifPresent(m -> {
+                    logger.warn("Intento de crear modelo duplicado: {}", dto.getNombreDelModelo());
+                    throw new RecursoDuplicadoException("Ya existe un modelo con el nombre: " + dto.getNombreDelModelo());
+                });
 
         Modelo modelo = modeloMapper.toEntity(dto);
         Modelo modeloGuardado = modeloRepository.save(modelo);
         logger.info("Modelo creado exitosamente con ID: {}", modeloGuardado.getId());
 
-        return new ResponseEntity<>(modeloMapper.toDetalleDto(modeloGuardado), HttpStatus.CREATED);
+        return ResponseEntity.status(201)
+                .body(ApiResponse.ok("Modelo creado exitosamente", modeloMapper.toDetalleDto(modeloGuardado)));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<ModeloDetalleDto> obtenerPorId(Long id) {
+    public ResponseEntity<ApiResponse<ModeloDetalleDto>> obtenerPorId(Long id) {
         logger.info("Buscando modelo con ID: {}", id);
 
         Modelo modelo = modeloRepository.findById(id)
@@ -65,24 +67,24 @@ public class ModeloService implements ModeloInterface {
                     return new RecursoNoEncontradoException("Modelo con ID " + id + " no encontrado");
                 });
 
-        return ResponseEntity.ok(modeloMapper.toDetalleDto(modelo));
+        return ResponseEntity.ok(ApiResponse.ok("Modelo encontrado", modeloMapper.toDetalleDto(modelo)));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<ModeloDetalleDto>> listarTodos() {
+    public ResponseEntity<ApiResponse<List<ModeloDetalleDto>>> listarTodos() {
         logger.info("Listando todos los modelos");
 
         List<ModeloDetalleDto> modelos = modeloRepository.findAll().stream()
                 .map(modeloMapper::toDetalleDto)
                 .collect(Collectors.toList());
 
-        return ResponseEntity.ok(modelos);
+        return ResponseEntity.ok(ApiResponse.ok("Listado de modelos exitoso", modelos));
     }
 
     @Override
     @Transactional
-    public ResponseEntity<ModeloDetalleDto> actualizar(Long id, ModeloActualizarDto dto) {
+    public ResponseEntity<ApiResponse<ModeloDetalleDto>> actualizar(Long id, ModeloActualizarDto dto) {
         logger.info("Actualizando modelo con ID: {}", id);
 
         Modelo modelo = modeloRepository.findById(id)
@@ -91,25 +93,30 @@ public class ModeloService implements ModeloInterface {
                     return new RecursoNoEncontradoException("Modelo con ID " + id + " no encontrado");
                 });
 
+        // Validar si el nuevo nombre ya existe (si se está cambiando)
         if (dto.getNombreDelModelo() != null &&
-                !dto.getNombreDelModelo().equalsIgnoreCase(modelo.getNombreDelModelo()) &&
-                modeloRepository.findByNombreDelModeloContainingIgnoreCase(dto.getNombreDelModelo())
-                        .stream()
-                        .anyMatch(m -> m.getNombreDelModelo().equalsIgnoreCase(dto.getNombreDelModelo()))) {
-            logger.warn("Intento de actualizar modelo con nombre duplicado: {}", dto.getNombreDelModelo());
-            throw new RecursoDuplicadoException("Ya existe un modelo con el nombre: " + dto.getNombreDelModelo());
+                !dto.getNombreDelModelo().equalsIgnoreCase(modelo.getNombreDelModelo())) {
+
+            modeloRepository.findByNombreDelModeloContainingIgnoreCase(dto.getNombreDelModelo())
+                    .stream()
+                    .filter(m -> m.getNombreDelModelo().equalsIgnoreCase(dto.getNombreDelModelo()))
+                    .findFirst()
+                    .ifPresent(m -> {
+                        logger.warn("Intento de actualizar modelo con nombre duplicado: {}", dto.getNombreDelModelo());
+                        throw new RecursoDuplicadoException("Ya existe un modelo con el nombre: " + dto.getNombreDelModelo());
+                    });
         }
 
         modeloMapper.actualizarDesdeDto(modelo, dto);
         Modelo modeloActualizado = modeloRepository.save(modelo);
         logger.info("Modelo con ID {} actualizado exitosamente", id);
 
-        return ResponseEntity.ok(modeloMapper.toDetalleDto(modeloActualizado));
+        return ResponseEntity.ok(ApiResponse.ok("Modelo actualizado exitosamente", modeloMapper.toDetalleDto(modeloActualizado)));
     }
 
     @Override
     @Transactional
-    public ResponseEntity<ModeloDetalleDto> eliminar(Long id) {
+    public ResponseEntity<ApiResponse<ModeloDetalleDto>> eliminar(Long id) {
         logger.info("Eliminando modelo con ID: {}", id);
 
         Modelo modelo = modeloRepository.findById(id)
@@ -121,12 +128,12 @@ public class ModeloService implements ModeloInterface {
         modeloRepository.delete(modelo);
         logger.info("Modelo con ID {} eliminado exitosamente", id);
 
-        return ResponseEntity.ok(modeloMapper.toDetalleDto(modelo));
+        return ResponseEntity.ok(ApiResponse.ok("Modelo eliminado exitosamente", modeloMapper.toDetalleDto(modelo)));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<ModeloDetalleDto>> filtrarPorEstatus(EstatusMarcaModeloTipoDeBien estatus) {
+    public ResponseEntity<ApiResponse<List<ModeloDetalleDto>>> filtrarPorEstatus(EstatusMarcaModeloTipoDeBien estatus) {
         logger.info("Filtrando modelos por estatus: {}", estatus);
 
         List<ModeloDetalleDto> modelos = modeloRepository.findByEstatusMarcaModeloTipoDeBien(estatus).stream()
@@ -138,11 +145,11 @@ public class ModeloService implements ModeloInterface {
             throw new RecursoNoEncontradoException("No se encontraron modelos con estatus: " + estatus);
         }
 
-        return ResponseEntity.ok(modelos);
+        return ResponseEntity.ok(ApiResponse.ok("Modelos encontrados", modelos));
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<List<ModeloDetalleDto>> buscarPorNombre(String nombre) {
+    public ResponseEntity<ApiResponse<List<ModeloDetalleDto>>> buscarPorNombre(String nombre) {
         logger.info("Buscando modelos que contengan en el nombre: {}", nombre);
 
         List<ModeloDetalleDto> modelos = modeloRepository.findByNombreDelModeloContainingIgnoreCase(nombre).stream()
@@ -154,11 +161,11 @@ public class ModeloService implements ModeloInterface {
             throw new RecursoNoEncontradoException("No se encontraron modelos que contengan: " + nombre);
         }
 
-        return ResponseEntity.ok(modelos);
+        return ResponseEntity.ok(ApiResponse.ok("Modelos encontrados", modelos));
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<List<ModeloDetalleDto>> buscarPorNombreYEstatus(String nombre, EstatusMarcaModeloTipoDeBien estatus) {
+    public ResponseEntity<ApiResponse<List<ModeloDetalleDto>>> buscarPorNombreYEstatus(String nombre, EstatusMarcaModeloTipoDeBien estatus) {
         logger.info("Buscando modelos que contengan '{}' y estatus {}", nombre, estatus);
 
         List<ModeloDetalleDto> modelos = modeloRepository
@@ -172,6 +179,6 @@ public class ModeloService implements ModeloInterface {
                     String.format("No se encontraron modelos con nombre '%s' y estatus %s", nombre, estatus));
         }
 
-        return ResponseEntity.ok(modelos);
+        return ResponseEntity.ok(ApiResponse.ok("Modelos encontrados", modelos));
     }
 }

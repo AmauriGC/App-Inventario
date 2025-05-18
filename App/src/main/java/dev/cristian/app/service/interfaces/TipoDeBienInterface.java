@@ -5,20 +5,21 @@ import dev.cristian.app.dto.tipodebien.TipoDeBienCrearDto;
 import dev.cristian.app.dto.tipodebien.TipoDeBienDetalleDto;
 import dev.cristian.app.enums.EstatusMarcaModeloTipoDeBien;
 import dev.cristian.app.enums.TipoBien;
+import dev.cristian.app.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 public interface TipoDeBienInterface {
-    ResponseEntity<TipoDeBienDetalleDto> crear(TipoDeBienCrearDto dto);
+    ResponseEntity<ApiResponse<TipoDeBienDetalleDto>> crear(TipoDeBienCrearDto dto);
 
-    ResponseEntity<TipoDeBienDetalleDto> obtenerPorId(Long id);
+    ResponseEntity<ApiResponse<TipoDeBienDetalleDto>> obtenerPorId(Long id);
 
-    ResponseEntity<List<TipoDeBienDetalleDto>> listarTodos();
+    ResponseEntity<ApiResponse<List<TipoDeBienDetalleDto>>> listarTodos();
 
-    ResponseEntity<TipoDeBienDetalleDto> actualizar(Long id, TipoDeBienActualizarDto dto);
+    ResponseEntity<ApiResponse<TipoDeBienDetalleDto>> actualizar(Long id, TipoDeBienActualizarDto dto);
 
-    ResponseEntity<TipoDeBienDetalleDto> eliminar(Long id);
+    ResponseEntity<ApiResponse<TipoDeBienDetalleDto>> eliminar(Long id);
 
-    ResponseEntity<List<TipoDeBienDetalleDto>> buscarPorTipoYEstado(TipoBien tipo, EstatusMarcaModeloTipoDeBien estatus);
+    ResponseEntity<ApiResponse<List<TipoDeBienDetalleDto>>> buscarPorTipoYEstado(TipoBien tipo, EstatusMarcaModeloTipoDeBien estatus);
 }

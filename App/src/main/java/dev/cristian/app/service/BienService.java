@@ -8,10 +8,10 @@ import dev.cristian.app.enums.EstatusBien;
 import dev.cristian.app.exception.exceptions.RecursoNoEncontradoException;
 import dev.cristian.app.mapper.BienMapper;
 import dev.cristian.app.repository.*;
+import dev.cristian.app.response.ApiResponse;
 import dev.cristian.app.service.interfaces.BienInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,8 +50,8 @@ public class BienService implements BienInterface {
 
     @Override
     @Transactional
-    public ResponseEntity<BienDetalleDto> crear(BienCrearDto dto) {
-        logger.info("Intentando crear nuevo bien");
+    public ResponseEntity<ApiResponse<BienDetalleDto>> crear(BienCrearDto dto) {
+        logger.info("Intentando crear nuevo bien:");
 
         AreaComun areaComun = areaComunRepository.findById(dto.getAreaComunId())
                 .orElseThrow(() -> {
@@ -88,12 +88,13 @@ public class BienService implements BienInterface {
         Bien bienGuardado = bienRepository.save(bien);
         logger.info("Bien creado exitosamente con ID: {}", bienGuardado.getId());
 
-        return new ResponseEntity<>(bienMapper.toDetalleDto(bienGuardado), HttpStatus.CREATED);
+        return ResponseEntity.status(201)
+                .body(ApiResponse.ok("Bien creado exitosamente", bienMapper.toDetalleDto(bienGuardado)));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<BienDetalleDto> obtenerPorId(Long id) {
+    public ResponseEntity<ApiResponse<BienDetalleDto>> obtenerPorId(Long id) {
         logger.info("Buscando bien con ID: {}", id);
 
         Bien bien = bienRepository.findById(id)
@@ -102,24 +103,24 @@ public class BienService implements BienInterface {
                     return new RecursoNoEncontradoException("Bien con ID " + id + " no encontrado");
                 });
 
-        return ResponseEntity.ok(bienMapper.toDetalleDto(bien));
+        return ResponseEntity.ok(ApiResponse.ok("Bien encontrado", bienMapper.toDetalleDto(bien)));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<BienDetalleDto>> listarTodos() {
+    public ResponseEntity<ApiResponse<List<BienDetalleDto>>> listarTodos() {
         logger.info("Listando todos los bienes");
 
         List<BienDetalleDto> bienes = bienRepository.findAll().stream()
                 .map(bienMapper::toDetalleDto)
                 .collect(Collectors.toList());
 
-        return ResponseEntity.ok(bienes);
+        return ResponseEntity.ok(ApiResponse.ok("Listado de bienes exitoso", bienes));
     }
 
     @Override
     @Transactional
-    public ResponseEntity<BienDetalleDto> actualizar(Long id, BienActualizarDto dto) {
+    public ResponseEntity<ApiResponse<BienDetalleDto>> actualizar(Long id, BienActualizarDto dto) {
         logger.info("Actualizando bien con ID: {}", id);
 
         Bien bien = bienRepository.findById(id)
@@ -132,12 +133,12 @@ public class BienService implements BienInterface {
         Bien bienActualizado = bienRepository.save(bien);
         logger.info("Bien con ID {} actualizado exitosamente", id);
 
-        return ResponseEntity.ok(bienMapper.toDetalleDto(bienActualizado));
+        return ResponseEntity.ok(ApiResponse.ok("Bien actualizado exitosamente", bienMapper.toDetalleDto(bienActualizado)));
     }
 
     @Override
     @Transactional
-    public ResponseEntity<BienDetalleDto> eliminar(Long id) {
+    public ResponseEntity<ApiResponse<BienDetalleDto>> eliminar(Long id) {
         logger.info("Eliminando bien con ID: {}", id);
 
         Bien bien = bienRepository.findById(id)
@@ -149,12 +150,12 @@ public class BienService implements BienInterface {
         bienRepository.delete(bien);
         logger.info("Bien con ID {} eliminado exitosamente", id);
 
-        return ResponseEntity.ok(bienMapper.toDetalleDto(bien));
+        return ResponseEntity.ok(ApiResponse.ok("Bien eliminado exitosamente", bienMapper.toDetalleDto(bien)));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<BienDetalleDto>> buscarPorAreaOMarca(Long idArea, Long idMarca) {
+    public ResponseEntity<ApiResponse<List<BienDetalleDto>>> buscarPorAreaOMarca(Long idArea, Long idMarca) {
         if (idArea != null) {
             logger.info("Buscando bienes por área común ID: {}", idArea);
             return buscarPorAreaComun(idArea);
@@ -163,16 +164,15 @@ public class BienService implements BienInterface {
             return buscarPorMarca(idMarca);
         }
         logger.info("Búsqueda sin parámetros, retornando lista vacía");
-        return ResponseEntity.ok(List.of());
+        return ResponseEntity.ok(ApiResponse.ok("No se proporcionaron criterios de búsqueda", List.of()));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<BienDetalleDto>> filtrarPorEstatus(EstatusBien estatus) {
+    public ResponseEntity<ApiResponse<List<BienDetalleDto>>> filtrarPorEstatus(EstatusBien estatus) {
         logger.info("Filtrando bienes por estatus: {}", estatus);
 
-        List<BienDetalleDto> bienes = bienRepository.findAll().stream()
-                .filter(b -> b.getEstatusBien() == estatus)
+        List<BienDetalleDto> bienes = bienRepository.findByEstatusBien(estatus).stream()
                 .map(bienMapper::toDetalleDto)
                 .collect(Collectors.toList());
 
@@ -181,10 +181,10 @@ public class BienService implements BienInterface {
             throw new RecursoNoEncontradoException("No se encontraron bienes con estatus: " + estatus);
         }
 
-        return ResponseEntity.ok(bienes);
+        return ResponseEntity.ok(ApiResponse.ok("Bienes encontrados", bienes));
     }
 
-    private ResponseEntity<List<BienDetalleDto>> buscarPorAreaComun(Long areaComunId) {
+    private ResponseEntity<ApiResponse<List<BienDetalleDto>>> buscarPorAreaComun(Long areaComunId) {
         List<BienDetalleDto> bienes = bienRepository.findByAreaComunIdAndEstatusBien(areaComunId, EstatusBien.Activo).stream()
                 .map(bienMapper::toDetalleDto)
                 .collect(Collectors.toList());
@@ -194,11 +194,11 @@ public class BienService implements BienInterface {
             throw new RecursoNoEncontradoException("No se encontraron bienes activos para el área común especificada");
         }
 
-        return ResponseEntity.ok(bienes);
+        return ResponseEntity.ok(ApiResponse.ok("Bienes encontrados", bienes));
     }
 
-    private ResponseEntity<List<BienDetalleDto>> buscarPorMarca(Long marcaId) {
-        List<BienDetalleDto> bienes = bienRepository.findByMarcaIdAndModeloId(marcaId, null).stream()
+    private ResponseEntity<ApiResponse<List<BienDetalleDto>>> buscarPorMarca(Long marcaId) {
+        List<BienDetalleDto> bienes = bienRepository.findByMarcaId(marcaId).stream()
                 .map(bienMapper::toDetalleDto)
                 .collect(Collectors.toList());
 
@@ -207,6 +207,6 @@ public class BienService implements BienInterface {
             throw new RecursoNoEncontradoException("No se encontraron bienes para la marca especificada");
         }
 
-        return ResponseEntity.ok(bienes);
+        return ResponseEntity.ok(ApiResponse.ok("Bienes encontrados", bienes));
     }
 }

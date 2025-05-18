@@ -10,10 +10,10 @@ import dev.cristian.app.exception.exceptions.RecursoDuplicadoException;
 import dev.cristian.app.exception.exceptions.RecursoNoEncontradoException;
 import dev.cristian.app.mapper.AreaComunMapper;
 import dev.cristian.app.repository.AreaComunRepository;
+import dev.cristian.app.response.ApiResponse;
 import dev.cristian.app.service.interfaces.AreaComunInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,7 +36,7 @@ public class AreaComunService implements AreaComunInterface {
 
     @Override
     @Transactional
-    public ResponseEntity<AreaComunDetalleDto> crear(AreaComunCrearDto dto) {
+    public ResponseEntity<ApiResponse<AreaComunDetalleDto>> crear(AreaComunCrearDto dto) {
         logger.info("Intentando crear nueva área común: {}", dto.getNombreDelArea());
 
         if (areaComunRepository.findByNombreDelAreaContainingIgnoreCase(dto.getNombreDelArea()).stream()
@@ -49,12 +49,12 @@ public class AreaComunService implements AreaComunInterface {
         AreaComun guardada = areaComunRepository.save(areaComun);
         logger.info("Área común creada exitosamente con ID: {}", guardada.getId());
 
-        return new ResponseEntity<>(areaComunMapper.toDetalleDto(guardada), HttpStatus.CREATED);
+        return ResponseEntity.status(201).body(ApiResponse.ok("Área común creada exitosamente", areaComunMapper.toDetalleDto(guardada)));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<AreaComunDetalleDto> obtenerPorId(Long id) {
+    public ResponseEntity<ApiResponse<AreaComunDetalleDto>> obtenerPorId(Long id) {
         logger.info("Buscando área común con ID: {}", id);
 
         AreaComun areaComun = areaComunRepository.findById(id)
@@ -63,24 +63,24 @@ public class AreaComunService implements AreaComunInterface {
                     return new RecursoNoEncontradoException("Área común con ID " + id + " no encontrada.");
                 });
 
-        return ResponseEntity.ok(areaComunMapper.toDetalleDto(areaComun));
+        return ResponseEntity.ok(ApiResponse.ok("Área común encontrada", areaComunMapper.toDetalleDto(areaComun)));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<AreaComunDetalleDto>> listarTodas() {
+    public ResponseEntity<ApiResponse<List<AreaComunDetalleDto>>> listarTodas() {
         logger.info("Listando todas las áreas comunes");
 
         List<AreaComunDetalleDto> areas = areaComunRepository.findAll().stream()
                 .map(areaComunMapper::toDetalleDto)
                 .collect(Collectors.toList());
 
-        return ResponseEntity.ok(areas);
+        return ResponseEntity.ok(ApiResponse.ok("Listado exitoso", areas));
     }
 
     @Override
     @Transactional
-    public ResponseEntity<AreaComunDetalleDto> actualizar(Long id, AreaComunActualizarDto dto) {
+    public ResponseEntity<ApiResponse<AreaComunDetalleDto>> actualizar(Long id, AreaComunActualizarDto dto) {
         logger.info("Actualizando área común con ID: {}", id);
 
         AreaComun existente = areaComunRepository.findById(id)
@@ -90,7 +90,7 @@ public class AreaComunService implements AreaComunInterface {
                 });
 
         if (dto.getNombreDelArea() != null &&
-                !dto.getNombreDelArea().equals(existente.getNombreDelArea()) &&
+                !dto.getNombreDelArea().equalsIgnoreCase(existente.getNombreDelArea()) &&
                 areaComunRepository.findByNombreDelAreaContainingIgnoreCase(dto.getNombreDelArea()).stream()
                         .anyMatch(a -> a.getNombreDelArea().equalsIgnoreCase(dto.getNombreDelArea()))) {
             logger.warn("Intento de actualizar área común con nombre duplicado: {}", dto.getNombreDelArea());
@@ -101,12 +101,12 @@ public class AreaComunService implements AreaComunInterface {
         AreaComun actualizada = areaComunRepository.save(existente);
         logger.info("Área común con ID {} actualizada exitosamente", id);
 
-        return ResponseEntity.ok(areaComunMapper.toDetalleDto(actualizada));
+        return ResponseEntity.ok(ApiResponse.ok("Área común actualizada exitosamente", areaComunMapper.toDetalleDto(actualizada)));
     }
 
     @Override
     @Transactional
-    public ResponseEntity<AreaComunDetalleDto> eliminar(Long id) {
+    public ResponseEntity<ApiResponse<AreaComunDetalleDto>> eliminar(Long id) {
         logger.info("Eliminando área común con ID: {}", id);
 
         AreaComun areaComun = areaComunRepository.findById(id)
@@ -118,12 +118,12 @@ public class AreaComunService implements AreaComunInterface {
         areaComunRepository.delete(areaComun);
         logger.info("Área común con ID {} eliminada exitosamente", id);
 
-        return ResponseEntity.ok(areaComunMapper.toDetalleDto(areaComun));
+        return ResponseEntity.ok(ApiResponse.ok("Área común eliminada exitosamente", areaComunMapper.toDetalleDto(areaComun)));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<AreaComunDetalleDto>> buscarPorTipoYEstado(TipoDeArea tipo, EstatusAreaComun estatus) {
+    public ResponseEntity<ApiResponse<List<AreaComunDetalleDto>>> buscarPorTipoYEstado(TipoDeArea tipo, EstatusAreaComun estatus) {
         logger.info("Buscando áreas comunes por tipo {} y estado {}", tipo, estatus);
 
         List<AreaComunDetalleDto> areas = areaComunRepository.findByTipoDeAreaAndEstatusAreaComun(tipo, estatus).stream()
@@ -135,12 +135,12 @@ public class AreaComunService implements AreaComunInterface {
             throw new RecursoNoEncontradoException("No se encontraron áreas comunes con los criterios especificados");
         }
 
-        return ResponseEntity.ok(areas);
+        return ResponseEntity.ok(ApiResponse.ok("Áreas comunes encontradas", areas));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<AreaComunDetalleDto>> buscarPorNombre(String nombre) {
+    public ResponseEntity<ApiResponse<List<AreaComunDetalleDto>>> buscarPorNombre(String nombre) {
         logger.info("Buscando áreas comunes que contengan en el nombre: {}", nombre);
 
         List<AreaComunDetalleDto> areas = areaComunRepository.findByNombreDelAreaContainingIgnoreCase(nombre).stream()
@@ -153,12 +153,12 @@ public class AreaComunService implements AreaComunInterface {
         }
 
         logger.info("Se encontraron {} áreas comunes con nombre que contiene: {}", areas.size(), nombre);
-        return ResponseEntity.ok(areas);
+        return ResponseEntity.ok(ApiResponse.ok("Áreas comunes encontradas", areas));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<AreaComunDetalleDto>> buscarPorEstado(EstatusAreaComun estatus) {
+    public ResponseEntity<ApiResponse<List<AreaComunDetalleDto>>> buscarPorEstado(EstatusAreaComun estatus) {
         logger.info("Buscando áreas comunes con estado: {}", estatus);
 
         List<AreaComunDetalleDto> areas = areaComunRepository.findByEstatusAreaComun(estatus).stream()
@@ -171,6 +171,6 @@ public class AreaComunService implements AreaComunInterface {
         }
 
         logger.info("Se encontraron {} áreas comunes con estado: {}", areas.size(), estatus);
-        return ResponseEntity.ok(areas);
+        return ResponseEntity.ok(ApiResponse.ok("Áreas comunes encontradas", areas));
     }
 }

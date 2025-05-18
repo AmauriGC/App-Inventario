@@ -7,15 +7,16 @@ import dev.cristian.app.entity.Asignaciones;
 import dev.cristian.app.entity.Bien;
 import dev.cristian.app.entity.Usuario;
 import dev.cristian.app.enums.EstatusAsignacion;
+import dev.cristian.app.exception.exceptions.RecursoDuplicadoException;
 import dev.cristian.app.exception.exceptions.RecursoNoEncontradoException;
 import dev.cristian.app.mapper.AsignacionesMapper;
 import dev.cristian.app.repository.AsignacionesRepository;
 import dev.cristian.app.repository.BienRepository;
 import dev.cristian.app.repository.UsuarioRepository;
+import dev.cristian.app.response.ApiResponse;
 import dev.cristian.app.service.interfaces.AsignacionesInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,8 +47,14 @@ public class AsignacionService implements AsignacionesInterface {
 
     @Override
     @Transactional
-    public ResponseEntity<AsignacionDetalleDto> asignar(AsignacionCrearDto dto) {
+    public ResponseEntity<ApiResponse<AsignacionDetalleDto>> asignar(AsignacionCrearDto dto) {
         logger.info("Intentando crear nueva asignación para usuario {} y bien {}", dto.getUsuarioId(), dto.getBienId());
+
+        // Verificar si ya existe una asignación activa para este bien
+        if (asignacionesRepository.existsByBienIdAndEstatusAsignacion(dto.getBienId(), EstatusAsignacion.Asignada)) {
+            logger.warn("Intento de asignar un bien ya asignado: {}", dto.getBienId());
+            throw new RecursoDuplicadoException("El bien con ID " + dto.getBienId() + " ya tiene una asignación activa");
+        }
 
         Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
                 .orElseThrow(() -> {
@@ -65,12 +72,13 @@ public class AsignacionService implements AsignacionesInterface {
         asignacion = asignacionesRepository.save(asignacion);
         logger.info("Asignación creada exitosamente con ID: {}", asignacion.getId());
 
-        return new ResponseEntity<>(asignacionesMapper.toDetalleDto(asignacion), HttpStatus.CREATED);
+        return ResponseEntity.status(201)
+                .body(ApiResponse.ok("Asignación creada exitosamente", asignacionesMapper.toDetalleDto(asignacion)));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<AsignacionDetalleDto> obtenerPorId(Long id) {
+    public ResponseEntity<ApiResponse<AsignacionDetalleDto>> obtenerPorId(Long id) {
         logger.info("Buscando asignación con ID: {}", id);
 
         Asignaciones asignacion = asignacionesRepository.findById(id)
@@ -79,24 +87,24 @@ public class AsignacionService implements AsignacionesInterface {
                     return new RecursoNoEncontradoException("Asignación con ID " + id + " no encontrada.");
                 });
 
-        return ResponseEntity.ok(asignacionesMapper.toDetalleDto(asignacion));
+        return ResponseEntity.ok(ApiResponse.ok("Asignación encontrada", asignacionesMapper.toDetalleDto(asignacion)));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<AsignacionDetalleDto>> listarTodas() {
+    public ResponseEntity<ApiResponse<List<AsignacionDetalleDto>>> listarTodas() {
         logger.info("Listando todas las asignaciones");
 
         List<AsignacionDetalleDto> asignaciones = asignacionesRepository.findAll().stream()
                 .map(asignacionesMapper::toDetalleDto)
                 .collect(Collectors.toList());
 
-        return ResponseEntity.ok(asignaciones);
+        return ResponseEntity.ok(ApiResponse.ok("Listado de asignaciones exitoso", asignaciones));
     }
 
     @Override
     @Transactional
-    public ResponseEntity<AsignacionDetalleDto> actualizar(Long id, AsignacionActualizarDto dto) {
+    public ResponseEntity<ApiResponse<AsignacionDetalleDto>> actualizar(Long id, AsignacionActualizarDto dto) {
         logger.info("Actualizando asignación con ID: {}", id);
 
         Asignaciones asignacion = asignacionesRepository.findById(id)
@@ -115,12 +123,12 @@ public class AsignacionService implements AsignacionesInterface {
         Asignaciones actualizada = asignacionesRepository.save(asignacion);
         logger.info("Asignación con ID {} actualizada exitosamente", id);
 
-        return ResponseEntity.ok(asignacionesMapper.toDetalleDto(actualizada));
+        return ResponseEntity.ok(ApiResponse.ok("Asignación actualizada exitosamente", asignacionesMapper.toDetalleDto(actualizada)));
     }
 
     @Override
     @Transactional
-    public ResponseEntity<AsignacionDetalleDto> eliminar(Long id) {
+    public ResponseEntity<ApiResponse<AsignacionDetalleDto>> eliminar(Long id) {
         logger.info("Eliminando asignación con ID: {}", id);
 
         Asignaciones asignacion = asignacionesRepository.findById(id)
@@ -132,30 +140,30 @@ public class AsignacionService implements AsignacionesInterface {
         asignacionesRepository.delete(asignacion);
         logger.info("Asignación con ID {} eliminada exitosamente", id);
 
-        return ResponseEntity.ok(asignacionesMapper.toDetalleDto(asignacion));
+        return ResponseEntity.ok(ApiResponse.ok("Asignación eliminada exitosamente", asignacionesMapper.toDetalleDto(asignacion)));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<AsignacionDetalleDto>> buscarPorUsuarioOBien(Long idUsuario, Long idBien) {
+    public ResponseEntity<ApiResponse<List<AsignacionDetalleDto>>> buscarPorUsuarioOBien(Long idUsuario, Long idBien) {
         if (idUsuario != null) {
-            logger.info("Buscando asignaciones activas para usuario ID: {}", idUsuario);
+            logger.info("Buscando asignaciones para usuario ID: {}", idUsuario);
             return buscarAsignacionesActivasPorUsuario(idUsuario);
         } else if (idBien != null) {
-            logger.info("Buscando asignaciones activas para bien ID: {}", idBien);
+            logger.info("Buscando asignaciones para bien ID: {}", idBien);
             return buscarAsignacionesActivasPorBien(idBien);
         }
         logger.info("Búsqueda sin parámetros, retornando lista vacía");
-        return ResponseEntity.ok(List.of());
+        return ResponseEntity.ok(ApiResponse.ok("No se proporcionaron criterios de búsqueda", List.of()));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<AsignacionDetalleDto>> filtrarPorEstatus(EstatusAsignacion estatus) {
+    public ResponseEntity<ApiResponse<List<AsignacionDetalleDto>>> filtrarPorEstatus(EstatusAsignacion estatus) {
         logger.info("Filtrando asignaciones por estatus: {}", estatus);
 
         List<AsignacionDetalleDto> asignaciones = asignacionesRepository
-                .findByEstatusAsignacionAndFechaDeRevocacionIsNull(estatus).stream()
+                .findByEstatusAsignacion(estatus).stream()
                 .map(asignacionesMapper::toDetalleDto)
                 .collect(Collectors.toList());
 
@@ -164,12 +172,12 @@ public class AsignacionService implements AsignacionesInterface {
             throw new RecursoNoEncontradoException("No se encontraron asignaciones con estatus: " + estatus);
         }
 
-        return ResponseEntity.ok(asignaciones);
+        return ResponseEntity.ok(ApiResponse.ok("Asignaciones encontradas", asignaciones));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<AsignacionDetalleDto>> buscarAsignacionesActivasPorUsuario(Long usuarioId) {
+    public ResponseEntity<ApiResponse<List<AsignacionDetalleDto>>> buscarAsignacionesActivasPorUsuario(Long usuarioId) {
         logger.info("Buscando asignaciones activas para usuario ID: {}", usuarioId);
 
         List<AsignacionDetalleDto> asignaciones = asignacionesRepository
@@ -182,12 +190,12 @@ public class AsignacionService implements AsignacionesInterface {
             throw new RecursoNoEncontradoException("No se encontraron asignaciones activas para usuario con ID: " + usuarioId);
         }
 
-        return ResponseEntity.ok(asignaciones);
+        return ResponseEntity.ok(ApiResponse.ok("Asignaciones activas encontradas", asignaciones));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<AsignacionDetalleDto>> buscarAsignacionesActivasPorBien(Long bienId) {
+    public ResponseEntity<ApiResponse<List<AsignacionDetalleDto>>> buscarAsignacionesActivasPorBien(Long bienId) {
         logger.info("Buscando asignaciones activas para bien ID: {}", bienId);
 
         List<AsignacionDetalleDto> asignaciones = asignacionesRepository
@@ -200,12 +208,12 @@ public class AsignacionService implements AsignacionesInterface {
             throw new RecursoNoEncontradoException("No se encontraron asignaciones activas para bien con ID: " + bienId);
         }
 
-        return ResponseEntity.ok(asignaciones);
+        return ResponseEntity.ok(ApiResponse.ok("Asignaciones activas encontradas", asignaciones));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<AsignacionDetalleDto>> buscarAsignacionesPorUsuarioYRangoFechas(
+    public ResponseEntity<ApiResponse<List<AsignacionDetalleDto>>> buscarAsignacionesPorUsuarioYRangoFechas(
             Long usuarioId, LocalDateTime inicio, LocalDateTime fin) {
         logger.info("Buscando asignaciones para usuario ID {} entre {} y {}", usuarioId, inicio, fin);
 
@@ -219,6 +227,6 @@ public class AsignacionService implements AsignacionesInterface {
             throw new RecursoNoEncontradoException("No se encontraron asignaciones para el usuario en el rango de fechas especificado");
         }
 
-        return ResponseEntity.ok(asignaciones);
+        return ResponseEntity.ok(ApiResponse.ok("Asignaciones encontradas en el rango de fechas", asignaciones));
     }
 }

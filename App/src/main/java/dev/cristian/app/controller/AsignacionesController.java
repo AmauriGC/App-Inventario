@@ -4,6 +4,7 @@ import dev.cristian.app.dto.asignacion.AsignacionActualizarDto;
 import dev.cristian.app.dto.asignacion.AsignacionCrearDto;
 import dev.cristian.app.dto.asignacion.AsignacionDetalleDto;
 import dev.cristian.app.enums.EstatusAsignacion;
+import dev.cristian.app.response.ApiResponse;
 import dev.cristian.app.service.AsignacionService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -24,47 +25,47 @@ public class AsignacionesController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AsignacionDetalleDto>> listarTodas() {
+    public ResponseEntity<ApiResponse<List<AsignacionDetalleDto>>> listarTodas() {
         return asignacionService.listarTodas();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AsignacionDetalleDto> obtenerPorId(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<AsignacionDetalleDto>> obtenerPorId(@PathVariable Long id) {
         return asignacionService.obtenerPorId(id);
     }
 
     @PostMapping
-    public ResponseEntity<AsignacionDetalleDto> crear(@Valid @RequestBody AsignacionCrearDto dto) {
+    public ResponseEntity<ApiResponse<AsignacionDetalleDto>> crear(@Valid @RequestBody AsignacionCrearDto dto) {
         return asignacionService.asignar(dto);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AsignacionDetalleDto> actualizar(
+    public ResponseEntity<ApiResponse<AsignacionDetalleDto>> actualizar(
             @PathVariable Long id,
             @Valid @RequestBody AsignacionActualizarDto dto) {
         return asignacionService.actualizar(id, dto);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<AsignacionDetalleDto> eliminar(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<AsignacionDetalleDto>> eliminar(@PathVariable Long id) {
         return asignacionService.eliminar(id);
     }
 
     @GetMapping("/buscar")
-    public ResponseEntity<List<AsignacionDetalleDto>> buscarPorUsuarioOBien(
+    public ResponseEntity<ApiResponse<List<AsignacionDetalleDto>>> buscarPorUsuarioOBien(
             @RequestParam(required = false) Long usuarioId,
             @RequestParam(required = false) Long bienId) {
         return asignacionService.buscarPorUsuarioOBien(usuarioId, bienId);
     }
 
     @GetMapping("/filtro")
-    public ResponseEntity<List<AsignacionDetalleDto>> filtrarPorEstatus(
+    public ResponseEntity<ApiResponse<List<AsignacionDetalleDto>>> filtrarPorEstatus(
             @RequestParam EstatusAsignacion estatus) {
         return asignacionService.filtrarPorEstatus(estatus);
     }
 
     @GetMapping("/usuario-fechas")
-    public ResponseEntity<List<AsignacionDetalleDto>> buscarPorUsuarioYRangoFechas(
+    public ResponseEntity<ApiResponse<List<AsignacionDetalleDto>>> buscarPorUsuarioYRangoFechas(
             @RequestParam Long usuarioId,
             @RequestParam LocalDateTime inicio,
             @RequestParam LocalDateTime fin) {

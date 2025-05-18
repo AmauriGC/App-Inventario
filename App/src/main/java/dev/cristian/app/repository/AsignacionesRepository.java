@@ -13,7 +13,9 @@ public interface AsignacionesRepository extends JpaRepository<Asignaciones, Long
 
     List<Asignaciones> findByBienIdAndEstatusAsignacion(Long bienId, EstatusAsignacion estatus);
 
-    List<Asignaciones> findByEstatusAsignacionAndFechaDeRevocacionIsNull(EstatusAsignacion estatus);
+    List<Asignaciones> findByEstatusAsignacion(EstatusAsignacion estatus);
 
     List<Asignaciones> findByUsuarioIdAndFechaDeAsignacionBetween(Long usuarioId, LocalDateTime inicio, LocalDateTime fin);
+
+    boolean existsByBienIdAndEstatusAsignacion(Long bienId, EstatusAsignacion estatusAsignacion);
 }

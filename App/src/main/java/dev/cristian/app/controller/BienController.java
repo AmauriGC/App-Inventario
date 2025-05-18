@@ -4,6 +4,7 @@ import dev.cristian.app.dto.bien.BienActualizarDto;
 import dev.cristian.app.dto.bien.BienCrearDto;
 import dev.cristian.app.dto.bien.BienDetalleDto;
 import dev.cristian.app.enums.EstatusBien;
+import dev.cristian.app.response.ApiResponse;
 import dev.cristian.app.service.BienService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -23,41 +24,41 @@ public class BienController {
     }
 
     @GetMapping
-    public ResponseEntity<List<BienDetalleDto>> listarTodos() {
+    public ResponseEntity<ApiResponse<List<BienDetalleDto>>> listarTodos() {
         return bienService.listarTodos();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BienDetalleDto> obtenerPorId(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<BienDetalleDto>> obtenerPorId(@PathVariable Long id) {
         return bienService.obtenerPorId(id);
     }
 
     @PostMapping
-    public ResponseEntity<BienDetalleDto> crear(@Valid @RequestBody BienCrearDto dto) {
+    public ResponseEntity<ApiResponse<BienDetalleDto>> crear(@Valid @RequestBody BienCrearDto dto) {
         return bienService.crear(dto);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<BienDetalleDto> actualizar(
+    public ResponseEntity<ApiResponse<BienDetalleDto>> actualizar(
             @PathVariable Long id,
             @Valid @RequestBody BienActualizarDto dto) {
         return bienService.actualizar(id, dto);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<BienDetalleDto> eliminar(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<BienDetalleDto>> eliminar(@PathVariable Long id) {
         return bienService.eliminar(id);
     }
 
     @GetMapping("/buscar")
-    public ResponseEntity<List<BienDetalleDto>> buscarPorAreaOMarca(
+    public ResponseEntity<ApiResponse<List<BienDetalleDto>>> buscarPorAreaOMarca(
             @RequestParam(required = false) Long areaId,
             @RequestParam(required = false) Long marcaId) {
         return bienService.buscarPorAreaOMarca(areaId, marcaId);
     }
 
     @GetMapping("/filtro")
-    public ResponseEntity<List<BienDetalleDto>> filtrarPorEstatus(
+    public ResponseEntity<ApiResponse<List<BienDetalleDto>>> filtrarPorEstatus(
             @RequestParam EstatusBien estatus) {
         return bienService.filtrarPorEstatus(estatus);
     }
