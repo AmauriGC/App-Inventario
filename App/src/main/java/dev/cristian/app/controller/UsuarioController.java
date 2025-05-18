@@ -1,9 +1,6 @@
 package dev.cristian.app.controller;
 
-import dev.cristian.app.dto.usuario.UsuarioActualizarDto;
-import dev.cristian.app.dto.usuario.UsuarioActualizarRolEstatusDto;
-import dev.cristian.app.dto.usuario.UsuarioCrearDto;
-import dev.cristian.app.dto.usuario.UsuarioDetalleDto;
+import dev.cristian.app.dto.usuario.*;
 import dev.cristian.app.enums.EstatusUsuario;
 import dev.cristian.app.enums.Rol;
 import dev.cristian.app.service.UsuarioService;
@@ -53,6 +50,13 @@ public class UsuarioController {
         return usuarioService.actualizarRolYEstatus(id, dto);
     }
 
+    @PutMapping("/{id}/contraseñ")
+    public ResponseEntity<UsuarioDetalleDto> actualizarContrasena(
+            @PathVariable Long id,
+            @Valid @RequestBody UsuarioActualizarContrasenaDto dto) {
+        return usuarioService.actualizarContrasena(id, dto);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<UsuarioDetalleDto> eliminar(@PathVariable Long id) {
         return usuarioService.eliminar(id);
@@ -83,5 +87,12 @@ public class UsuarioController {
             @RequestParam Rol rol,
             @RequestParam EstatusUsuario estatus) {
         return usuarioService.buscarPorNombreRolYEstatus(nombre, rol, estatus);
+    }
+
+    @GetMapping("/filtrar-rol-estatus")
+    public ResponseEntity<List<UsuarioDetalleDto>> filtrarPorRolYEstatus(
+            @RequestParam Rol rol,
+            @RequestParam EstatusUsuario estatus) {
+        return usuarioService.filtrarPorRolYEstatus(rol, estatus);
     }
 }

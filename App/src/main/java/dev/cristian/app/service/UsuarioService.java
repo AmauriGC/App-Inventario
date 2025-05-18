@@ -1,9 +1,6 @@
 package dev.cristian.app.service;
 
-import dev.cristian.app.dto.usuario.UsuarioActualizarDto;
-import dev.cristian.app.dto.usuario.UsuarioActualizarRolEstatusDto;
-import dev.cristian.app.dto.usuario.UsuarioCrearDto;
-import dev.cristian.app.dto.usuario.UsuarioDetalleDto;
+import dev.cristian.app.dto.usuario.*;
 import dev.cristian.app.entity.Usuario;
 import dev.cristian.app.enums.EstatusUsuario;
 import dev.cristian.app.enums.Rol;
@@ -124,6 +121,23 @@ public class UsuarioService implements UsuarioInterface {
     }
 
     @Override
+    public ResponseEntity<UsuarioDetalleDto> actualizarContrasena(Long id, UsuarioActualizarContrasenaDto dto) {
+        logger.info("Actualizando contraseña de usuario con ID: {}", id);
+
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> {
+                    logger.error("Usuario con ID {} no encontrado para la actualización de la contraseña", id);
+                    return new RecursoNoEncontradoException("Usuario con ID " + id + " no encontrado");
+                });
+
+        usuarioMapper.actualizarContrasena(usuario, dto);
+        Usuario usuarioActualizado = usuarioRepository.save(usuario);
+        logger.info("Contraseña de usuario con ID {} actualizada exitosamente", id);
+
+        return ResponseEntity.ok(usuarioMapper.toDetalleDto(usuarioActualizado));
+    }
+
+    @Override
     @Transactional
     public ResponseEntity<UsuarioDetalleDto> eliminar(Long id) {
         logger.info("Eliminando usuario con ID: {}", id);
@@ -174,6 +188,7 @@ public class UsuarioService implements UsuarioInterface {
         return ResponseEntity.ok(usuarios);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<UsuarioDetalleDto>> buscarPorNombreOApellidos(String nombre, String apellidos) {
         logger.info("Buscando usuarios por nombre '{}' o apellidos '{}'", nombre, apellidos);
@@ -192,6 +207,7 @@ public class UsuarioService implements UsuarioInterface {
         return ResponseEntity.ok(usuarios);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public ResponseEntity<List<UsuarioDetalleDto>> buscarPorNombreRolYEstatus(String nombre, Rol rol, EstatusUsuario estatus) {
         logger.info("Buscando usuarios por nombre '{}', rol {} y estatus {}", nombre, rol, estatus);
@@ -206,6 +222,26 @@ public class UsuarioService implements UsuarioInterface {
             throw new RecursoNoEncontradoException(
                     String.format("No se encontraron usuarios con nombre '%s', rol %s y estatus %s",
                             nombre, rol, estatus));
+        }
+
+        return ResponseEntity.ok(usuarios);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<UsuarioDetalleDto>> filtrarPorRolYEstatus(Rol rol, EstatusUsuario estatus) {
+        logger.info("Buscando usuarios por rol {} y estatus {}", rol, estatus);
+
+        List<UsuarioDetalleDto> usuarios = usuarioRepository
+                .findByRolAndEstatusUsuario(rol, estatus).stream()
+                .map(usuarioMapper::toDetalleDto)
+                .collect(Collectors.toList());
+
+        if (usuarios.isEmpty()) {
+            logger.warn("No se encontraron usuarios con rol {} y estatus {}", rol, estatus);
+            throw new RecursoNoEncontradoException(
+                    String.format("No se encontraron usuarios con rol '%s' y estatus %s", rol, estatus)
+            );
         }
 
         return ResponseEntity.ok(usuarios);
