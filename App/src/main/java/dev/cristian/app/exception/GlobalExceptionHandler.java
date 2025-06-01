@@ -14,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -102,4 +103,24 @@ public class GlobalExceptionHandler {
 
         return crearRespuesta(mensaje, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMaxSizeException(MaxUploadSizeExceededException exc) {
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.error("El archivo es demasiado grande. Tamaño máximo permitido: " +
+                        exc.getMaxUploadSize() + " bytes"));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Void>> handleGeneralException(Exception exc) {
+        return ResponseEntity.internalServerError()
+                .body(ApiResponse.error("Error al procesar la solicitud: " + exc.getMessage()));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
 }
